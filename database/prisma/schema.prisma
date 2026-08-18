@@ -46,9 +46,43 @@ model User {
 //============================================
 // 4 modelo task
 //============================================
+model Task {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      String   @default("PENDING") // PENDING, IN_PROGRESS, DONE
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH
+  dueDate     DateTime? @map("due_date")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  creatorId   String   @map("creator_id")
+  creator     User     @relation(fields: [creatorId], references: [id], name: "TaskCreator")
+
+  assignees   TaskAssignment[]
+  comments    Comment[]
+
+  @@index([status])
+  @@index([creatorId])
+  @@index([dueDate])
+  @@map("tasks")
+}
 
 //============================================
 // 5 modelo comment
 //============================================
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  taskId    String   @map("task_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now())
 
+  task      Task     @relation(fields: [taskId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("comments")
+}
 

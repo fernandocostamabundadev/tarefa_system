@@ -31,6 +31,17 @@ enum taskPriority{
 //============================================
 // 3 modelo user
 //============================================
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  tasks     Task[]
+  assigned  TaskAssignment[]
+  comments  Comment[]
+
+  @@map("users")
+}
 
 //============================================
 // 4 modelo task

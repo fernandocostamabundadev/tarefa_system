@@ -1,0 +1,11 @@
+{
+  "name": "api-tarefas",
+  "version": "1.0.0",
+  "description": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "src/app.js",
+  "keywords": [],
+  "author": "Fernando Costa Mabunda",
+  "scripts": {}
+}

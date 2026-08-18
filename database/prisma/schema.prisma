@@ -86,3 +86,62 @@ model Comment {
   @@map("comments")
 }
 
+//========================================
+// 6 modelo task_assignment
+//========================================
+model TaskAssignment {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  userId    String   @map("user_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  task      Task     @relation(fields: [taskId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([taskId, userId])
+  @@map("task_assignments")
+}
+
+//=========================================
+// 7 modelo label
+//=========================================
+model label {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  color     String?  @default("#000000")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt
+
+  tasks     TaskLabel[]
+
+  @@map("labels")
+}
+
+//====================================================
+// 9 modelo task_label
+//====================================================
+model TaskLabel {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  labelId   String   @map("label_id")
+
+  task      Task     @relation(fields: [taskId], references: [id])
+  label     Label    @relation(fields: [labelId], references: [id])
+
+  @@unique([taskId, labelId])
+  @@map("task_labels")
+}
+
+//================================================
+// 10 label
+//
+model Label {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  color     String?  @default("#000000")
+  createdAt DateTime @default(now())
+
+  tasks     Task[]
+
+  @@map("label")
+}

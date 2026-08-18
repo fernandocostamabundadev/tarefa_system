@@ -1,3 +1,6 @@
+//============================================
+// 1 configurando o gerador do prisma client
+//============================================
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -6,3 +9,35 @@ generator client {
 datasource db {
   provider = "sqlite"
 }
+
+//============================================
+// 2 enums
+//============================================
+
+//============status da tarefa================
+enum taskStatus{
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DONE
+}
+//============prioridade da tarefa============
+enum taskPriority{
+  LOW
+  MEDIUM
+  HIGH
+}
+
+//============================================
+// 3 modelo user
+//============================================
+
+//============================================
+// 4 modelo task
+//============================================
+
+//============================================
+// 5 modelo comment
+//============================================
+
+

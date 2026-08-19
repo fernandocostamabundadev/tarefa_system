@@ -1,8 +1,13 @@
-//============================================
-// 1 configurando o gerador do prisma client
-//============================================
+// ============================================================
+// SISTEMA DE TAREFAS - SCHEMA ORGANIZADO
+// ============================================================
+
+// ============================================================
+// 1. CONFIGURAÇÃO DO PRISMA
+// ============================================================
+
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"  
   output   = "../generated/prisma"
 }
 
@@ -10,138 +15,133 @@ datasource db {
   provider = "sqlite"
 }
 
-//============================================
-// 2 enums
-//============================================
+// ============================================================
+// 2. ENUMS
+// ============================================================
 
-//============status da tarefa================
-enum taskStatus{
+enum TaskStatus {
   PENDING
   IN_PROGRESS
   COMPLETED
   DONE
 }
-//============prioridade da tarefa============
-enum taskPriority{
+
+enum TaskPriority {
   LOW
   MEDIUM
   HIGH
 }
 
-//============================================
-// 3 modelo user
-//============================================
+// ============================================================
+// 3. MODELOS
+// ============================================================
+
+// ===== 3.1 USER =====
 model User {
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
   password  String
-  tasks     Task[]
-  assigned  TaskAssignment[]
-  comments  Comment[]
+  createdAt DateTime @default(now())  
+  updatedAt DateTime @updatedAt 
+
+  // Relacionamentos
+  createdTasks Task[]             @relation(name: "TaskCreator")
+  assigned     TaskAssignment[]
+  comments     Comment[]
 
   @@map("users")
 }
 
-//============================================
-// 4 modelo task
-//============================================
+// ===== 3.2 TASK =====
 model Task {
-  id          String   @id @default(uuid())
+  id          String       @id @default(uuid())
   title       String
   description String?
-  status      String   @default("PENDING") // PENDING, IN_PROGRESS, DONE
-  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH
-  dueDate     DateTime? @map("due_date")
-  completedAt DateTime? @map("completed_at")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  status      TaskStatus   @default(PENDING)  
+  priority    TaskPriority @default(MEDIUM)   
+  dueDate     DateTime?    @map("due_date")
+  completedAt DateTime?    @map("completed_at")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?    @map("deleted_at")  
 
   // Relacionamentos
-  creatorId   String   @map("creator_id")
-  creator     User     @relation(fields: [creatorId], references: [id], name: "TaskCreator")
+  creatorId   Int          @map("creator_id")
+  creator     User         @relation(fields: [creatorId], references: [id], name: "TaskCreator")
 
   assignees   TaskAssignment[]
   comments    Comment[]
+  labels      TaskLabel[]
 
   @@index([status])
+  @@index([priority])   
   @@index([creatorId])
   @@index([dueDate])
+  @@index([deletedAt])   
   @@map("tasks")
 }
 
-//============================================
-// 5 modelo comment
-//============================================
+// ===== 3.3 COMMENT =====
 model Comment {
   id        String   @id @default(uuid())
   content   String
   taskId    String   @map("task_id")
-  userId    String   @map("user_id")
+  userId    Int      @map("user_id") 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt 
 
-  task      Task     @relation(fields: [taskId], references: [id])
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id])
 
+  @@index([taskId])
+  @@index([userId])
   @@map("comments")
 }
 
-//========================================
-// 6 modelo task_assignment
-//========================================
+// ===== 3.4 TASK_ASSIGNMENT (N:N) =====
 model TaskAssignment {
-  id        String   @id @default(uuid())
-  taskId    String   @map("task_id")
-  userId    String   @map("user_id")
+  id         String   @id @default(uuid())
+  taskId     String   @map("task_id")
+  userId     Int      @map("user_id")
   assignedAt DateTime @default(now()) @map("assigned_at")
+  assignedBy Int?     @map("assigned_by")
 
-  task      Task     @relation(fields: [taskId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id])
 
   @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
   @@map("task_assignments")
 }
 
-//=========================================
-// 7 modelo label
-//=========================================
-model label {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  color     String?  @default("#000000")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt
-
-  tasks     TaskLabel[]
-
-  @@map("labels")
-}
-
-//====================================================
-// 9 modelo task_label
-//====================================================
-model TaskLabel {
-  id        String   @id @default(uuid())
-  taskId    String   @map("task_id")
-  labelId   String   @map("label_id")
-
-  task      Task     @relation(fields: [taskId], references: [id])
-  label     Label    @relation(fields: [labelId], references: [id])
-
-  @@unique([taskId, labelId])
-  @@map("task_labels")
-}
-
-//================================================
-// 10 label
-//
+// ===== 3.5 LABEL =====
 model Label {
   id        String   @id @default(uuid())
   name      String   @unique
   color     String?  @default("#000000")
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  tasks     Task[]
+  tasks     TaskLabel[]
 
-  @@map("label")
+  @@index([name])
+  @@map("labels")
+}
+
+// ===== 3.6 TASK_LABEL (N:N) =====
+model TaskLabel {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  labelId   String   @map("label_id")
+  createdAt DateTime @default(now())
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label     Label    @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, labelId])
+  @@index([taskId])
+  @@index([labelId])
+  @@map("task_labels")
 }
